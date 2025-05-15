@@ -1,0 +1,22 @@
+.carousel-container{
+  height: 400px;
+}
+
+.react-multi-carousel-item{
+  width: 80%;
+  display: flex;
+  justify-content: center;
+}
+
+@media screen and (max-width: 767px){
+  .carousel-container{
+    height: 350px;
+  }
+}
+
+@media screen and (max-width: 540px){
+  .carousel-container{
+    height: 330px;
+  }
+  } 
+

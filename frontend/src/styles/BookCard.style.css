@@ -1,0 +1,18 @@
+.truncate {
+  display: block;        
+  width: 18ch;            
+  white-space: nowrap;   
+  overflow: hidden;      
+  text-overflow: ellipsis;
+}
+
+.card-col{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.book-cover-img{
+  width: 150px;
+  aspect-ratio: 2 / 3; 
+  object-fit: contain;
+}
