@@ -1,20 +1,20 @@
+import oracledb from "oracledb";
 import dotenv from "dotenv";
-import mysql from "mysql2/promise";
 dotenv.config();
 
-export const db = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-});
-
-(async () => {
+const poolPromise = (async () => {
   try {
-    const [rows] = await db.query("SELECT 1");
-    console.log("✅ DB 연결 성공:", rows);
+    const pool = await oracledb.createPool({
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      connectString: process.env.DB_CONNECT_STRING,
+    });
+    console.log("✅ Oracle DB 연결 성공!");
+    return pool;
   } catch (err) {
-    console.error("❌ DB 연결 실패:", err.message);
-    process.exit(1);
+    console.error("❌ Oracle DB 연결 실패:", err.message);
+    process.exit(1); 
   }
 })();
+
+export default poolPromise;

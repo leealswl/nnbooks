@@ -11,8 +11,10 @@ const options = {
     },
     servers: [
       {
-        url: "https://nnbook-production.up.railway.app:8080",
-        description: "배포 서버",
+        // url: "https://nnbook-production.up.railway.app:8080",
+        // description: "배포 서버",
+         url: "http://localhost:8080",
+        description: "로컬 개발 서버",
       },
     ],
   },

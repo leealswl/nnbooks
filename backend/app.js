@@ -11,8 +11,14 @@ import aladinRouter from "./routes/aladin.js";
 dotenv.config();
 
 const app = express();
+// 허용할 출처 목록
+const allowedOrigins = [
+  "https://nn-book.vercel.app",  // 기존 배포 프론트엔드 주소
+  "http://localhost:5173",       // 로컬에서 테스트할 프론트엔드 주소 (Vite 기본)
+  // 만약 다른 포트번호를 사용한다면 여기에 추가하세요.
+];
 
-app.use(cors({origin: "https://nn-book.vercel.app"}));
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
