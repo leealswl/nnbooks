@@ -1,81 +1,202 @@
-// db.js가 내보내는 '약속(Promise)'을 가져와서 'dbPromise'라는 명확한 이름으로 받습니다.
-import dbPromise from "../config/db.js";
+import oracledb from "../config/db.js";
 
+/**
+ * 사용자가 현재 읽고 있는 책 목록을 조회합니다.
+ * @param {string} email 사용자 이메일
+ */
 export const findReadingBooks = async (email) => {
-  // 함수가 실행되면, 먼저 약속이 이행되길 기다려서 실제 DB 연결(pool)을 얻습니다.
-  const db = await dbPromise;
-
-  // SQL에서 문자열 값은 쌍따옴표(")가 아닌 홑따옴표(')를 사용해야 합니다.
-  const [rows] = await db.query(
-    `SELECT id, bookID FROM userlibrary WHERE (ownerEmail = :1 OR holderEmail = :2) AND status = 'reading'`,
-    [email, email]
-  );
-  return rows;
+  let connection;
+  try {
+    connection = await oracledb.getConnection();
+    const { rows } = await connection.execute(
+      `SELECT ID, BOOKID FROM USERLIBRARY WHERE (OWNEREMAIL = :1 OR HOLDEREMAIL = :2) AND STATUS = 'reading'`,
+      [email, email]
+    );
+    return rows;
+  } catch (err) {
+    console.error("읽고 있는 책 조회 오류:", err);
+    throw err;
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
 };
 
+/**
+ * 사용자가 다 읽은 책 목록을 조회합니다.
+ * @param {string} email 사용자 이메일
+ */
 export const findFinishedBooks = async (email) => {
-  const db = await dbPromise;
-  const [rows] = await db.query(
-    `SELECT id, bookID FROM userlibrary WHERE (ownerEmail = :1 OR holderEmail = :2) AND status = 'finished'`,
-    [email, email]
-  );
-  return rows;
+  let connection;
+  try {
+    connection = await oracledb.getConnection();
+    const { rows } = await connection.execute(
+      `SELECT ID, BOOKID FROM USERLIBRARY WHERE (OWNEREMAIL = :1 OR HOLDEREMAIL = :2) AND STATUS = 'finished'`,
+      [email, email]
+    );
+    return rows;
+  } catch (err) {
+    console.error("다 읽은 책 조회 오류:", err);
+    throw err;
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
 };
 
+/**
+ * 사용자가 빌려준 책 목록을 조회합니다.
+ * @param {string} email 사용자 이메일
+ */
 export const findLendedBooks = async (email) => {
-  const db = await dbPromise;
-  // Oracle에서는 boolean 값으로 true/false 대신 숫자 1/0을 사용하는 것이 더 안전합니다.
-  const [rows] = await db.query(
-    `SELECT id, bookID FROM userlibrary WHERE ownerEmail = :1 AND isBorrowed = 1`,
-    [email]
-  );
-  return rows;
+  let connection;
+  try {
+    connection = await oracledb.getConnection();
+    const { rows } = await connection.execute(
+      `SELECT ID, BOOKID FROM USERLIBRARY WHERE OWNEREMAIL = :1 AND ISBORROWED = 1`,
+      [email]
+    );
+    return rows;
+  } catch (err) {
+    console.error("빌려준 책 조회 오류:", err);
+    throw err;
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
 };
 
+/**
+ * 내 서재에 새로운 책을 추가합니다.
+ * @param {string} bookID 책 ID
+ * @param {string} ownerEmail 소유자 이메일
+ * @param {string} holderEmail 보유자 이메일
+ */
 export const addNewBook = async (bookID, ownerEmail, holderEmail) => {
-  const db = await dbPromise;
-  // 바인드 변수를 '?' 대신 ':1, :2' 등으로 사용하는 것이 Oracle에서 더 안정적입니다.
-  const [result] = await db.query(
-    "INSERT INTO userlibrary (bookID, ownerEmail, holderEmail) VALUES (:1, :2, :3)",
-    [bookID, ownerEmail, holderEmail]
-  );
-  return result;
+  let connection;
+  try {
+    connection = await oracledb.getConnection();
+    const result = await connection.execute(
+      "INSERT INTO USERLIBRARY (BOOKID, OWNEREMAIL, HOLDEREMAIL) VALUES (:1, :2, :3)",
+      [bookID, ownerEmail, holderEmail]
+    );
+    await connection.commit(); // 중요: INSERT 후에는 반드시 커밋해야 합니다.
+    return result;
+  } catch (err) {
+    console.error("새 책 추가 오류:", err);
+    throw err;
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
 };
 
+/**
+ * 책의 상태를 'finished'(완독)으로 변경합니다.
+ * @param {string} bookID 책 ID
+ * @param {string} email 사용자 이메일
+ */
 export const changeStatus = async (bookID, email) => {
-  const db = await dbPromise;
-  const [result] = await db.query(
-    `
-    UPDATE userlibrary
-    SET status = 'finished'
-    WHERE bookId = :1
-      AND (holderEmail = :2 OR ownerEmail = :3)
-    `,
-    [bookID, email, email]
-  );
-  return result;
+  let connection;
+  try {
+    connection = await oracledb.getConnection();
+    const result = await connection.execute(
+      `UPDATE USERLIBRARY
+       SET STATUS = 'finished'
+       WHERE BOOKID = :1 AND (HOLDEREMAIL = :2 OR OWNEREMAIL = :3)`,
+      [bookID, email, email]
+    );
+    await connection.commit(); // 중요: UPDATE 후에는 반드시 커밋해야 합니다.
+    return result;
+  } catch (err) {
+    console.error("책 상태 변경 오류:", err);
+    throw err;
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
 };
 
+/**
+ * 책의 좋아요(isLiked) 상태를 변경하고, 완독 상태로 함께 변경합니다.
+ * @param {string} bookID 책 ID
+ * @param {string} email 사용자 이메일
+ */
 export const changeLike = async (bookID, email) => {
-  const db = await dbPromise;
-  const [result] = await db.query(
-    `
-    UPDATE userlibrary
-    SET isLiked = 1, status = 'finished'
-    WHERE bookId = :1
-      AND (ownerEmail = :2 OR holderEmail = :3)
-    `,
-    [bookID, email, email]
-  );
-  console.log("변경된 행 수:", result.affectedRows);
-  return result;
+  let connection;
+  try {
+    connection = await oracledb.getConnection();
+    const result = await connection.execute(
+      `UPDATE USERLIBRARY
+       SET ISLIKED = 1, STATUS = 'finished'
+       WHERE BOOKID = :1 AND (OWNEREMAIL = :2 OR HOLDEREMAIL = :3)`,
+      [bookID, email, email]
+    );
+    await connection.commit(); // 중요: UPDATE 후에는 반드시 커밋해야 합니다.
+    console.log("변경된 행 수:", result.rowsAffected);
+    return result;
+  } catch (err) {
+    console.error("좋아요 변경 오류:", err);
+    throw err;
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
 };
 
+/**
+ * 사용자가 좋아요 표시한 책 목록을 조회합니다.
+ * @param {string} email 사용자 이메일
+ */
 export const findLiked = async (email) => {
-  const db = await dbPromise;
-  const [rows] = await db.query(
-    `SELECT id, bookID FROM userlibrary WHERE (ownerEmail = :1 OR holderEmail = :2) AND isLiked = 1`,
-    [email, email]
-  );
-  return rows;
+  let connection;
+  try {
+    connection = await oracledb.getConnection();
+    const { rows } = await connection.execute(
+      `SELECT ID, BOOKID FROM USERLIBRARY WHERE (OWNEREMAIL = :1 OR HOLDEREMAIL = :2) AND ISLIKED = 1`,
+      [email, email]
+    );
+    return rows;
+  } catch (err) {
+    console.error("좋아요 책 조회 오류:", err);
+    throw err;
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
 };

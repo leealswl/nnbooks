@@ -26,3 +26,7 @@ app.listen(PORT, () => {
 
 
 //http://localhost:8080/api-docs/
+
+//DB_USER=library
+//DB_PASSWORD=1234
+//DB_CONNECT_STRING=localhost:1521/xepdb1
